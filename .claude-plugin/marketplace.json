@@ -1,14 +1,14 @@
 {
   "name": "fast-jev-compaction",
   "owner": {
-    "name": "tamaratran",
-    "url": "https://github.com/tamaratran"
+    "name": "hencydsouza24",
+    "url": "https://github.com/hencydsouza24"
   },
   "plugins": [
     {
       "name": "fast-jev-compaction",
       "source": "./",
-      "description": "Verbatim Jev-guided compaction for Claude Code sessions.",
+      "description": "Jev-guided verbatim compaction for Claude Code, Codex, and OpenCode sessions.",
       "version": "0.3.0",
       "license": "MIT"
     }

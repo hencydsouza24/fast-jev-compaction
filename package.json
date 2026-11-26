@@ -1,7 +1,7 @@
 {
   "name": "fast-jev-compaction",
   "version": "0.3.0",
-  "description": "Jev-guided context compaction for Claude Code and Codex sessions.",
+  "description": "Jev-guided context compaction for Claude Code, Codex, and OpenCode sessions.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -19,6 +19,7 @@
     "LICENSE",
     ".claude-plugin",
     ".codex-plugin",
+    ".opencode-plugin",
     "hooks"
   ],
   "scripts": {

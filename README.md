@@ -146,7 +146,7 @@ Then add this repository as a plugin marketplace and install the plugin,
 either from the shell or as slash commands inside a session:
 
 ```sh
-claude plugin marketplace add tamaratran/fast-jev-compaction
+claude plugin marketplace add hencydsouza24/fast-jev-compaction
 claude plugin install fast-jev-compaction@fast-jev-compaction
 ```
 
@@ -171,6 +171,55 @@ Due to Codex's hook system limitations (inability to replace compacted transcrip
 directly), the Codex plugin uses a two-phase approach:
 1. PreCompact hook runs Jev compaction and writes a decisions log
 2. SessionStart(source="compact") reads the log and injects it as additional context
+
+## OpenCode Plugin
+
+An OpenCode-compatible plugin is included in `.opencode-plugin/` using the same
+library core. It intercepts the `session.compaction` hook to run Jev-guided
+compaction before the model summary is generated.
+
+### Installation
+
+Add to your `opencode.json`:
+
+```json
+{
+  "plugins": [
+    { "package": "/path/to/fast-jev-compaction/.opencode-plugin" }
+  ]
+}
+```
+
+### Configuration
+
+Configure in `opencode.json`:
+
+```json
+{
+  "plugins": [
+    {
+      "package": "/path/to/fast-jev-compaction/.opencode-plugin",
+      "config": {
+        "apiKey": "your-typesafe-api-key",
+        "keepThreshold": 0.5,
+        "preserveRecentMessages": 6
+      }
+    }
+  ]
+}
+```
+
+Or set `TYPESAFE_API_KEY` environment variable.
+
+### How It Works
+
+1. Intercepts the `compaction` hook before model request
+2. Parses OpenCode messages (handles `content` as string or array)
+3. Runs Jev compaction
+4. If reduction ≥ `minReductionRatio` (0.25), sets `event.result` to skip model call
+5. Writes decisions log to `.codex/fast-jev-compaction/jev-decisions.jsonl`
+
+For detailed documentation, see `.opencode-plugin/README.md`.
 
 ## Development
 
