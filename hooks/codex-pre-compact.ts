@@ -13,9 +13,9 @@ import * as path from 'path';
 import {
   compact,
   reductionRatio,
-} from './src/compact.ts';
-import { JevClient } from './src/client.ts';
-import type { Message, ToolUse, ToolResult } from './src/types.ts';
+} from '../src/compact.js';
+import { JevClient } from '../src/client.js';
+import type { Message, ToolUse, ToolResult } from '../src/types.js';
 
 type PreCompactInput = {
   session_id: string;
