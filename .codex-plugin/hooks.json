@@ -1,0 +1,32 @@
+{
+  "description": "Jev-guided context compaction for Codex sessions",
+  "hooks": {
+    "PreCompact": [
+      {
+        "matcher": "auto|manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tsx ${PLUGIN_ROOT}/../hooks/codex-pre-compact.ts",
+            "statusMessage": "Running Jev compaction",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tsx ${PLUGIN_ROOT}/../hooks/codex-session-start.ts",
+            "statusMessage": "Injecting Jev decisions",
+            "timeout": 30,
+            "additionalContextLimit": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

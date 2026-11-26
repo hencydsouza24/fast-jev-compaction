@@ -1,7 +1,7 @@
 {
   "name": "fast-jev-compaction",
-  "version": "0.2.0",
-  "description": "Continuous, verbatim context compaction for LLM agents using TypeSafe's Jev model.",
+  "version": "0.3.0",
+  "description": "Jev-guided context compaction for Claude Code and Codex sessions.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -16,7 +16,10 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    ".claude-plugin",
+    ".codex-plugin",
+    "hooks"
   ],
   "scripts": {
     "build": "tsc",
@@ -24,7 +27,10 @@
     "test": "vitest run",
     "demo": "tsx examples/demo.ts",
     "typecheck:hooks": "tsc -p tsconfig.hooks.json",
-    "validate:plugin": "claude plugin validate .claude-plugin/plugin.json"
+    "validate:plugin": "claude plugin validate .claude-plugin/plugin.json",
+    "validate:codex-plugin": "cd .codex-plugin && codex plugin validate .",
+    "install:claude": "claude plugin marketplace add hencydsouza24/fast-jev-compaction && claude plugin install fast-jev-compaction",
+    "install:codex": "cd .codex-plugin && codex plugin add ."
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

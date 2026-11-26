@@ -162,6 +162,16 @@ To run from a checkout without installing: `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 
 from the repository root. No publishing step is required; the marketplace is
 just the repo's `.claude-plugin/marketplace.json`.
 
+## Codex Plugin
+
+A Codex-compatible plugin is also included in `.codex-plugin/` using the same
+library core. See `.codex-plugin/README.md` for installation and configuration.
+
+Due to Codex's hook system limitations (inability to replace compacted transcripts
+directly), the Codex plugin uses a two-phase approach:
+1. PreCompact hook runs Jev compaction and writes a decisions log
+2. SessionStart(source="compact") reads the log and injects it as additional context
+
 ## Development
 
 ```sh
