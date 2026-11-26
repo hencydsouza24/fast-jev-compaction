@@ -46,8 +46,12 @@ function getConfig(): HookConfig {
 
 /** Get plugin data directory */
 function getDataDir(): string {
-  const projectRoot = process.cwd();
-  return path.join(projectRoot, '.codex', 'fast-jev-compaction');
+  const pluginRoot = process.env.PLUGIN_ROOT || process.env.CLAUDE_PLUGIN_ROOT;
+  if (pluginRoot) {
+    return path.join(path.dirname(pluginRoot), '.codex', 'fast-jev-compaction');
+  }
+  // Fallback to system temp
+  return '/tmp/fast-jev-compaction';
 }
 
 /** Read latest decisions log for this session */

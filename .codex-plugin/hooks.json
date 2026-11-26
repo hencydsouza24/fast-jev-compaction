@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tsx ${PLUGIN_ROOT}/../hooks/codex-pre-compact.ts",
+            "command": "tsx ${PLUGIN_ROOT}/hooks/codex-pre-compact.ts",
             "statusMessage": "Running Jev compaction",
             "timeout": 120
           }
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tsx ${PLUGIN_ROOT}/../hooks/codex-session-start.ts",
+            "command": "tsx ${PLUGIN_ROOT}/hooks/codex-session-start.ts",
             "statusMessage": "Injecting Jev decisions",
             "timeout": 30,
             "additionalContextLimit": 10000
