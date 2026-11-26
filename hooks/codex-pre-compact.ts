@@ -83,6 +83,18 @@ const pendingCalls = new Map<string, {
   messageIndex: number;
 }>();
 
+/** Extract content text from Codex content array */
+function extractContentText(content: any): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter((c: any) => c.type === 'output_text' || c.type === 'input_text')
+      .map((c: any) => c.text || '')
+      .join('\n');
+  }
+  return '';
+}
+
 /** Extract tool result text from Codex output format */
 function extractOutputText(output: Array<{ type: string; text?: string }>): string {
   return output
@@ -136,8 +148,8 @@ function parseTranscript(transcriptPath: string): Message[] {
         if (payload.type === 'message') {
           // User message in Codex format
           const role = payload.role === 'user' ? 'user' : 'assistant';
-          const text = payload.content || '';
-          
+          const text = extractContentText(payload.content);
+
           messages.push({
             role,
             text,
