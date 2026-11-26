@@ -7,7 +7,6 @@ import {
   reductionRatio,
 } from '../dist/compact.js';
 import { JevClient } from '../dist/client.js';
-import type { Message } from '../dist/types.js';
 
 // Default configuration
 const DEFAULT_CONFIG = {
@@ -49,8 +48,8 @@ function convertOpenCodeMessage(message) {
       toolUses.push({
         tool_use_id: call.id,
         tool: call.function?.name || call.tool,
-        input: typeof call.function?.arguments === 'string' 
-          ? JSON.parse(call.function?.arguments || '{}') 
+        input: typeof call.function?.arguments === 'string'
+          ? JSON.parse(call.function?.arguments || '{}')
           : call.function?.arguments || {},
       });
     }
@@ -133,7 +132,7 @@ export default createPlugin(({ register }) => {
   register('session.compaction', async (event) => {
     // Get configuration from plugin options
     const config = { ...DEFAULT_CONFIG };
-    
+
     // Get API key - try options first, then environment
     const apiKey = config.apiKey || process.env.TYPESAFE_API_KEY;
     if (!apiKey) {
@@ -175,7 +174,7 @@ export default createPlugin(({ register }) => {
 
     // Calculate reduction ratio
     const ratio = calcReductionRatio(result);
-    
+
     // Check if we have meaningful reduction
     if (ratio < config.minReductionRatio) {
       console.log(`fast-jev-compaction: Insufficient reduction (${Math.round(ratio * 100)}%), falling back to built-in`);
