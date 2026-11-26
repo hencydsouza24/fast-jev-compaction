@@ -1,10 +1,8 @@
-import { createPlugin } from '@opencode/plugin';
 import * as fs from 'fs';
 import * as path from 'path';
 
 import {
   compact,
-  reductionRatio,
 } from '../dist/compact.js';
 import { JevClient } from '../dist/client.js';
 
@@ -128,88 +126,92 @@ function writeDecisionsLog(sessionID, trigger, result) {
   fs.appendFileSync(logPath, logEntry + '\n');
 }
 
-export default createPlugin(({ register }) => {
-  register('session.compaction', async (event) => {
-    // Get configuration from plugin options
-    const config = { ...DEFAULT_CONFIG };
+// Load config from plugin options if available
+let pluginConfig = {};
 
+export default {
+  id: 'fast-jev-compaction',
+  setup: async (ctx) => {
     // Get API key - try options first, then environment
-    const apiKey = config.apiKey || process.env.TYPESAFE_API_KEY;
+    const apiKey = process.env.TYPESAFE_API_KEY || pluginConfig.apiKey;
+    
     if (!apiKey) {
-      console.log('fast-jev-compaction: TYPESAFE_API_KEY not configured');
+      console.log('fast-jev-compaction: TYPESAFE_API_KEY not configured. Set it as an environment variable.');
       return;
     }
 
-    // Check if we have enough messages
-    if (!event.messages || event.messages.length < 4) {
-      return;
-    }
+    // Register compaction hook
+    const cancelCompaction = ctx.plugin.hook('session.compaction', async (event) => {
+      const config = { ...DEFAULT_CONFIG, ...pluginConfig };
+      
+      // Check if we have enough messages
+      if (!event.messages || event.messages.length < 4) {
+        return;
+      }
 
-    // Parse OpenCode messages into fast-jev format
-    let messages;
-    try {
-      messages = parseOpenCodeTranscript(event.messages);
-    } catch (error) {
-      console.log(`fast-jev-compaction: Failed to parse transcript (${error.message})`);
-      return;
-    }
+      // Parse OpenCode messages into fast-jev format
+      let messages;
+      try {
+        messages = parseOpenCodeTranscript(event.messages);
+      } catch (error) {
+        console.log(`fast-jev-compaction: Failed to parse transcript (${error.message})`);
+        return;
+      }
 
-    // Run compaction
-    const client = new JevClient({ apiKey, model: config.model });
+      // Run compaction
+      const client = new JevClient({ apiKey, model: config.model });
 
-    let result;
-    try {
-      result = await compact(messages, client, {
-        goal: config.goal,
-        keepThreshold: config.keepThreshold,
-        preserveRecentMessages: config.preserveRecentMessages,
-        maxStateTokens: config.maxStateTokens,
-        maxRequestTokens: config.maxRequestTokens,
-        truncateHeadChars: config.truncateHeadChars,
-      });
-    } catch (error) {
-      console.log(`fast-jev-compaction: Compaction failed (${error.message})`);
-      return;
-    }
+      let result;
+      try {
+        result = await compact(messages, client, {
+          goal: config.goal,
+          keepThreshold: config.keepThreshold,
+          preserveRecentMessages: config.preserveRecentMessages,
+          maxStateTokens: config.maxStateTokens,
+          maxRequestTokens: config.maxRequestTokens,
+          truncateHeadChars: config.truncateHeadChars,
+        });
+      } catch (error) {
+        console.log(`fast-jev-compaction: Compaction failed (${error.message})`);
+        return;
+      }
 
-    // Calculate reduction ratio
-    const ratio = calcReductionRatio(result);
+      // Calculate reduction ratio
+      const ratio = calcReductionRatio(result);
+      
+      // Check if we have meaningful reduction
+      if (ratio < config.minReductionRatio) {
+        console.log(`fast-jev-compaction: Insufficient reduction (${Math.round(ratio * 100)}%), falling back to built-in`);
+        return;
+      }
 
-    // Check if we have meaningful reduction
-    if (ratio < config.minReductionRatio) {
-      console.log(`fast-jev-compaction: Insufficient reduction (${Math.round(ratio * 100)}%), falling back to built-in`);
-      return;
-    }
+      // Write decisions log
+      writeDecisionsLog(event.sessionID, 'auto', result);
 
-    // Write decisions log
-    writeDecisionsLog(event.sessionID, 'auto', result);
+      // Build the compacted messages
+      const compactedMessages = result.messages.map(m => ({
+        ...m,
+        // Remove the tool input from tool uses when result is dropped
+        toolUses: m.toolUses.map(tu => {
+          const decision = result.decisions.find(d => d.id === tu.tool_use_id);
+          if (!decision || decision.action === 'drop_call') {
+            return { ...tu, input: undefined };
+          }
+          return tu;
+        }),
+      }));
 
-    // Build the compacted messages
-    const compactedMessages = result.messages.map(m => ({
-      ...m,
-      // Remove the tool input from tool uses when result is dropped
-      toolUses: m.toolUses.map(tu => {
-        const decision = result.decisions.find(d => d.id === tu.tool_use_id);
-        if (!decision || decision.action === 'drop_call') {
-          return { ...tu, input: undefined };
-        }
-        return tu;
-      }),
-    }));
+      // Replace messages with compacted version
+      event.messages = compactedMessages;
 
-    // Replace messages with compacted version
-    event.messages = compactedMessages;
+      // Set result to skip the model call and use the compacted messages
+      event.result = {
+        summary: `[... Jev compaction applied: ${Math.round(ratio * 100)}% reduction ...]`,
+      };
 
-    // Skip the model call by setting result
-    event.result = {
-      summary: `[... Jev compaction applied: ${Math.round(ratio * 100)}% reduction ...]`,
-    };
+      console.log(`fast-jev-compaction: ${Math.round(ratio * 100)}% reduction (${result.stats.messagesAfter}/${result.stats.messagesBefore} messages)`);
+    });
 
-    console.log(`fast-jev-compaction: ${Math.round(ratio * 100)}% reduction (${result.stats.messagesAfter}/${result.stats.messagesBefore} messages)`);
-  });
-
-  // Also register for context hook to log decisions
-  register('session.context', async (event) => {
-    // This runs for every model request - no action needed for compaction plugin
-  });
-});
+    return cancelCompaction;
+  },
+};
