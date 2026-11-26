@@ -87,8 +87,10 @@ const pendingCalls = new Map<string, {
 function extractContentText(content: any): string {
   if (typeof content === 'string') return content;
   if (Array.isArray(content)) {
+    // Codex uses {type: "output_text", text: "..."} for message content
+    // and {type: "input_text", text: "..."} for tool outputs
     return content
-      .filter((c: any) => c.type === 'output_text' || c.type === 'input_text')
+      .filter((c: any) => c.type === 'output_text' || c.type === 'input_text' || c.type === 'text')
       .map((c: any) => c.text || '')
       .join('\n');
   }
